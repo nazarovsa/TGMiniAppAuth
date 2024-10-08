@@ -1,5 +1,9 @@
 <Project>
     <PropertyGroup>
+        <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LanguageVersion>12</LanguageVersion>
     </PropertyGroup>
 </Project>

@@ -1,8 +1,7 @@
 <Project>
-    <PropertyGroup>
-        <LanguageVersion>10</LanguageVersion>
-        <PackageFrameworkVersions>netstandard2.1;net6.0;net7.0</PackageFrameworkVersions>
-    </PropertyGroup>
+    <ItemGroup Label="Microsoft">
+        <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0"/>
+    </ItemGroup>
     <ItemGroup Label="Testing">
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="16.11.0"/>
         <PackageVersion Include="xunit" Version="2.4.1"/>
