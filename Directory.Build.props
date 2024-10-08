@@ -4,6 +4,6 @@
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <LanguageVersion>12</LanguageVersion>
+        <LangVersion>12</LangVersion>
     </PropertyGroup>
 </Project>
