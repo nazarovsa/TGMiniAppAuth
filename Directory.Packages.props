@@ -1,0 +1,13 @@
+<Project>
+    <PropertyGroup>
+        <LanguageVersion>10</LanguageVersion>
+        <PackageFrameworkVersions>netstandard2.1;net6.0;net7.0</PackageFrameworkVersions>
+    </PropertyGroup>
+    <ItemGroup Label="Testing">
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="16.11.0"/>
+        <PackageVersion Include="xunit" Version="2.4.1"/>
+        <PackageVersion Include="xunit.runner.visualstudio" Version="2.4.3"/>
+        <PackageVersion Include="coverlet.collector" Version="3.1.0"/>
+        <PackageVersion Include="NSubstitute" Version="4.4.0"/>
+    </ItemGroup>
+</Project>
