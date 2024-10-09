@@ -1,20 +1,14 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Web;
 
-namespace TGMiniAppAuth.AuthContext;
+namespace TgMiniAppAuth.Authorization;
 
 /// <summary>
 /// Telgram mini app auth context
 /// </summary>
-public sealed class TelegramAuthContext
+internal sealed class TelegramAuthorizationContext
 {
-  /// <summary>
-  /// User's data
-  /// </summary>
-  public TelegramUser User { get; }
-
   /// <summary>
   /// Id of a query
   /// </summary>
@@ -46,13 +40,13 @@ public sealed class TelegramAuthContext
   private static readonly byte[] WebAppDataBytes = "WebAppData"u8.ToArray();
 
   /// <summary>
-  /// Initializes a new instance of the <see cref="TelegramAuthContext"/> class.
+  /// Initializes a new instance of the <see cref="TelegramAuthorizationContext"/> class.
   /// </summary>
   /// <param name="userRaw">Raw user data.</param>
   /// <param name="queryId">Query ID data.</param>
   /// <param name="authDate">Auth date data.</param>
   /// <param name="hash">Hash data.</param>
-  private TelegramAuthContext(AuthDataPair userRaw, AuthDataPair queryId, AuthDataPair authDate, AuthDataPair hash)
+  private TelegramAuthorizationContext(AuthDataPair userRaw, AuthDataPair queryId, AuthDataPair authDate, AuthDataPair hash)
   {
     QueryId = queryId.Value;
     Hash = hash.Value;
@@ -60,7 +54,6 @@ public sealed class TelegramAuthContext
     CheckDataString = authDate.Raw + "\n" + queryId.Raw + "\n" + userRaw.Raw;
     CheckDataBytes = Encoding.UTF8.GetBytes(CheckDataString);
     AuthDate = DateTimeOffset.FromUnixTimeSeconds(long.Parse(authDate.Value));
-    User = JsonSerializer.Deserialize<TelegramUser>(userRaw.Value) ?? throw new ArgumentException($"Failed to extract {nameof(TelegramUser)}");
   }
 
   /// <summary>
@@ -81,12 +74,12 @@ public sealed class TelegramAuthContext
   }
 
   /// <summary>
-  /// Creates an instance of <see cref="TelegramAuthContext"/> from an HTML-encoded auth data string.
+  /// Creates an instance of <see cref="TelegramAuthorizationContext"/> from an HTML-encoded auth data string.
   /// </summary>
   /// <param name="urlEncodedString">HTML-encoded auth data string.</param>
-  /// <returns>New instance of a <see cref="TelegramAuthContext"/>.</returns>
+  /// <returns>New instance of a <see cref="TelegramAuthorizationContext"/>.</returns>
   /// <exception cref="ArgumentException">Thrown when required keys are not found in the data string.</exception>
-  public static TelegramAuthContext FromUrlEncodedString(string urlEncodedString)
+  public static TelegramAuthorizationContext FromUrlEncodedString(string urlEncodedString)
   {
     var decodedString = HttpUtility.UrlDecode(urlEncodedString);
     var items = decodedString.Split('&');
@@ -118,7 +111,7 @@ public sealed class TelegramAuthContext
       throw new ArgumentException("Key hash not found");
     }
 
-    return new TelegramAuthContext(userPair, queryIdPair, authDate, hash);
+    return new TelegramAuthorizationContext(userPair, queryIdPair, authDate, hash);
   }
 
   /// <summary>
