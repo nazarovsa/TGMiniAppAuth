@@ -16,7 +16,7 @@ public sealed class TelegramAuthContext
   public TelegramUser User { get; }
 
   /// <summary>
-  /// Id of an query
+  /// Id of a query
   /// </summary>
   public string QueryId { get; }
 
@@ -45,6 +45,13 @@ public sealed class TelegramAuthContext
   /// </summary>
   private static readonly byte[] WebAppDataBytes = "WebAppData"u8.ToArray();
 
+  /// <summary>
+  /// Initializes a new instance of the <see cref="TelegramAuthContext"/> class.
+  /// </summary>
+  /// <param name="userRaw">Raw user data.</param>
+  /// <param name="queryId">Query ID data.</param>
+  /// <param name="authDate">Auth date data.</param>
+  /// <param name="hash">Hash data.</param>
   private TelegramAuthContext(AuthDataPair userRaw, AuthDataPair queryId, AuthDataPair authDate, AuthDataPair hash)
   {
     QueryId = queryId.Value;
@@ -56,6 +63,11 @@ public sealed class TelegramAuthContext
     User = JsonSerializer.Deserialize<TelegramUser>(userRaw.Value) ?? throw new ArgumentException($"Failed to extract {nameof(TelegramUser)}");
   }
 
+  /// <summary>
+  /// Validates the auth context using the provided token.
+  /// </summary>
+  /// <param name="token">The token to validate against.</param>
+  /// <returns>True if valid, otherwise false.</returns>
   public bool IsValid(string token)
   {
     var tokenBytes = Encoding.UTF8.GetBytes(token);
@@ -69,14 +81,14 @@ public sealed class TelegramAuthContext
   }
 
   /// <summary>
-  /// Creates instance of <see cref="TelegramAuthContext"/> from html-encoded auth data string
+  /// Creates an instance of <see cref="TelegramAuthContext"/> from an HTML-encoded auth data string.
   /// </summary>
-  /// <param name="htmlEncodedString">Html-encoded auth data string</param>
-  /// <returns>New instance of a <see cref="TelegramAuthContext"/></returns>
-  /// <exception cref="ArgumentException"></exception>
-  public static TelegramAuthContext FromHtmlEncodedString(string htmlEncodedString)
+  /// <param name="urlEncodedString">HTML-encoded auth data string.</param>
+  /// <returns>New instance of a <see cref="TelegramAuthContext"/>.</returns>
+  /// <exception cref="ArgumentException">Thrown when required keys are not found in the data string.</exception>
+  public static TelegramAuthContext FromUrlEncodedString(string urlEncodedString)
   {
-    var decodedString = HttpUtility.UrlDecode(htmlEncodedString);
+    var decodedString = HttpUtility.UrlDecode(urlEncodedString);
     var items = decodedString.Split('&');
     var pairs = items
       .Select(x => new AuthDataPair(x))
@@ -109,14 +121,31 @@ public sealed class TelegramAuthContext
     return new TelegramAuthContext(userPair, queryIdPair, authDate, hash);
   }
 
+  /// <summary>
+  /// Represents a key-value pair of auth data.
+  /// </summary>
   private readonly record struct AuthDataPair
   {
+    /// <summary>
+    /// Gets the key of the pair.
+    /// </summary>
     public string Key { get; }
 
+    /// <summary>
+    /// Gets the value of the pair.
+    /// </summary>
     public string Value { get; }
 
+    /// <summary>
+    /// Gets the raw pair string.
+    /// </summary>
     public string Raw { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthDataPair"/> struct.
+    /// </summary>
+    /// <param name="pair">The key-value pair string.</param>
+    /// <exception cref="ArgumentException">Thrown when the pair string is not properly formatted.</exception>
     public AuthDataPair(string pair)
     {
       var items = pair.Split('=');

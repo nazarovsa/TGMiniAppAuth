@@ -4,8 +4,17 @@ using TGMiniAppAuth.Authorization;
 
 namespace TGMiniAppAuth;
 
+/// <summary>
+/// Provides extension methods for adding Telegram Mini App authentication services to the service collection.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds Telegram Mini App authentication and authorization services to the specified service collection.
+    /// </summary>
+    /// <param name="services">The service collection to add the services to.</param>
+    /// <returns>The updated service collection.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if the <paramref name="services"/> is null.</exception>
     public static IServiceCollection AddTgMiniAppAuth(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services, nameof(services));
@@ -25,9 +34,15 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Adds the authentication context accessor service to the specified service collection.
+    /// </summary>
+    /// <param name="services">The service collection to add the service to.</param>
+    /// <returns>The updated service collection.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if the <paramref name="services"/> is null.</exception>
     public static IServiceCollection AddAuthContextAccessor(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services,  nameof(services));
+        ArgumentNullException.ThrowIfNull(services, nameof(services));
 
         services.AddScoped<IAuthContextAccessor, AuthContextAccessor>();
 

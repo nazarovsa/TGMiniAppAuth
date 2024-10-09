@@ -1,13 +1,13 @@
 namespace TGMiniAppAuth.AuthContext;
 
 /// <summary>
-/// Telegram mini app auth context accessor
+/// Provides access to the Telegram authentication context from the HTTP context.
 /// </summary>
 public interface IAuthContextAccessor
 {
     /// <summary>
-    /// Returns TelegramAuthContext from http-context
+    /// Gets the Telegram authentication context.
     /// </summary>
-    /// <returns><see cref="TelegramAuthContext"/></returns>
-    public TelegramAuthContext Context { get; }
+    /// <returns>The <see cref="TelegramAuthContext"/>.</returns>
+    TelegramAuthContext Context { get; }
 }

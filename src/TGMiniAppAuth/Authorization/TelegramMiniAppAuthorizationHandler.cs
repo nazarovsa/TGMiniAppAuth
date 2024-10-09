@@ -29,7 +29,7 @@ public class TelegramMiniAppAuthorizationHandler : AuthorizationHandler<Telegram
             return Task.CompletedTask;
         }
 
-        var data = TelegramAuthContext.FromHtmlEncodedString(dataClaim.Value);
+        var data = TelegramAuthContext.FromUrlEncodedString(dataClaim.Value);
         if (data.IsValid(_options.Token))
         {
             var utcNow = _systemClock.UtcNow;
