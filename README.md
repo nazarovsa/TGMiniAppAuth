@@ -32,14 +32,14 @@ using TgMiniAppAuth;
 
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddTgMiniAppAuth();
+    services.AddTgMiniAppAuth(configuration);
 
-    // Configure options
-    services.Configure<TelegramMiniAppAuthenticationOptions>(options =>
-    {
-        options.Token = "YOUR_BOT_TOKEN";
-        options.AuthDataValidInterval = TimeSpan.FromHours(1); // Optional: default is 2 hours
-    });
+    // Options are now configured from the configuration
+    // Make sure to add the following to your appsettings.json:
+    // "TelegramMiniAppAuthorizationOptions": {
+    //   "Token": "YOUR_BOT_TOKEN",
+    //   "AuthDataValidInterval": "01:00:00"
+    // }
 }
 ```
 
@@ -67,7 +67,10 @@ public class TelegramController : ControllerBase
             user.Id,
             user.FirstName,
             user.LastName,
-            user.Username
+            user.Username,
+            user.LanguageCode,
+            user.IsPremium,
+            user.AllowWriteToPm
         });
     }
 }
