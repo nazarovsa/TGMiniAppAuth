@@ -3,7 +3,7 @@ namespace TgMiniAppAuth.Authentication
   /// <summary>
   /// Options for Telegram Mini App authentication.
   /// </summary>
-  public sealed class TelegramMiniAppAuthenticationOptions
+  public sealed class TelegramMiniAppAuthorizationOptions
   {
     /// <summary>
     /// Gets or sets the Telegram bot token.

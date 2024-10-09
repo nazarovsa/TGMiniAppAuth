@@ -18,7 +18,7 @@ namespace TgMiniAppAuth.Authorization
     /// <summary>
     /// The Telegram Mini App authentication options.
     /// </summary>
-    private readonly TelegramMiniAppAuthenticationOptions _options;
+    private readonly TelegramMiniAppAuthorizationOptions _options;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TelegramMiniAppAuthorizationHandler"/> class.
@@ -26,7 +26,7 @@ namespace TgMiniAppAuth.Authorization
     /// <param name="options">The options for Telegram Mini App authentication.</param>
     /// <param name="systemClock">The system clock.</param>
     /// <exception cref="ArgumentNullException">Thrown when options are null.</exception>
-    public TelegramMiniAppAuthorizationHandler(IOptions<TelegramMiniAppAuthenticationOptions> options,
+    public TelegramMiniAppAuthorizationHandler(IOptions<TelegramMiniAppAuthorizationOptions> options,
       ISystemClock systemClock)
     {
       _systemClock = systemClock;
