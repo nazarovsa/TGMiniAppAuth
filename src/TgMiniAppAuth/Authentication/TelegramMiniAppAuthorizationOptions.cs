@@ -8,11 +8,11 @@ namespace TgMiniAppAuth.Authentication
     /// <summary>
     /// Gets or sets the Telegram bot token.
     /// </summary>
-    public string Token { get; set; }
+    public required string Token { get; init; }
 
     /// <summary>
     /// Gets or sets the validity interval for authentication data. Default value is 2 hours.
     /// </summary>
-    public TimeSpan AuthDataValidInterval { get; set; } = TimeSpan.FromHours(2);
+    public TimeSpan AuthDataValidInterval { get; init; } = TimeSpan.FromHours(2);
   }
 }
