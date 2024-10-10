@@ -1,13 +1,18 @@
 <Project>
-    <PropertyGroup>
-        <LanguageVersion>10</LanguageVersion>
-        <PackageFrameworkVersions>netstandard2.1;net6.0;net7.0</PackageFrameworkVersions>
-    </PropertyGroup>
-    <ItemGroup Label="Testing">
-        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="16.11.0"/>
-        <PackageVersion Include="xunit" Version="2.4.1"/>
-        <PackageVersion Include="xunit.runner.visualstudio" Version="2.4.3"/>
-        <PackageVersion Include="coverlet.collector" Version="3.1.0"/>
-        <PackageVersion Include="NSubstitute" Version="4.4.0"/>
-    </ItemGroup>
+  <ItemGroup Label="Microsoft">
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
+    <PackageVersion Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
+    <PackageVersion Include="NSubstitute" Version="5.1.0" />
+  </ItemGroup>
 </Project>
