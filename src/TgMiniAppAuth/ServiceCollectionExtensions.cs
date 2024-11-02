@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,6 +33,7 @@ public static class ServiceCollectionExtensions
       .AddScheme<AuthenticationSchemeOptions, TelegramMiniAppAuthenticationHandler>(
         TgMiniAppAuthConstants.AuthenticationScheme, _ => { });
 
+    services.AddSingleton<IAuthorizationHandler, TelegramMiniAppAuthorizationHandler>();
     services.AddAuthorization(opt => opt.AddPolicy(TgMiniAppAuthConstants.AuthenticationScheme,
       policy =>
       {
