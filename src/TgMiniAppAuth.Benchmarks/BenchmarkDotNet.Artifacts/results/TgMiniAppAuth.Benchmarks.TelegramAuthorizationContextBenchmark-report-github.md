@@ -10,5 +10,5 @@ Apple M1 2.40GHz, 1 CPU, 8 logical and 8 physical cores
 ```
 | Method       | Mean     | Error     | StdDev    | Allocated |
 |------------- |---------:|----------:|----------:|----------:|
-| IsValid      | 7.087 μs | 0.1313 μs | 0.1290 μs |   7.55 KB |
-| IsValidSpans | 7.052 μs | 0.0895 μs | 0.0837 μs |   6.13 KB |
+| IsValid      | 7.671 μs | 0.1227 μs | 0.1680 μs |   7.55 KB |
+| IsValidSpans | 7.137 μs | 0.0933 μs | 0.0779 μs |   3.18 KB |
