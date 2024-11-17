@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 namespace TgMiniAppAuth;
 
 /// <summary>
@@ -56,5 +58,10 @@ public static class TgMiniAppAuthConstants
         /// The allow write to private message claim type.
         /// </summary>
         public const string AllowWriteToPm = $"{Prefix}:AllowWriteToPm";
+
+        /// <summary>
+        /// Photo url claim type.
+        /// </summary>
+        public const string PhotoUrl = $"{Prefix}:PhotoUrl";
     }
 }

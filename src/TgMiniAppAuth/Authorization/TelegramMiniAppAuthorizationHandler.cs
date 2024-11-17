@@ -32,7 +32,7 @@ namespace TgMiniAppAuth.Authorization
       _systemClock = systemClock;
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
     }
-
+    
     /// <summary>
     /// Handles the authorization requirement.
     /// </summary>

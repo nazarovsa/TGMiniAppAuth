@@ -52,6 +52,7 @@ namespace TgMiniAppAuth.Authentication
         new Claim(TgMiniAppAuthConstants.Claims.LanguageCode, telegramUser.LanguageCode),
         new Claim(TgMiniAppAuthConstants.Claims.IsPremium, telegramUser.IsPremium.ToString()),
         new Claim(TgMiniAppAuthConstants.Claims.AllowWriteToPm, telegramUser.AllowWriteToPm.ToString()),
+        new Claim(TgMiniAppAuthConstants.Claims.PhotoUrl, telegramUser.PhotoUrl),
       };
 
       var identity = new ClaimsIdentity(claims, TgMiniAppAuthConstants.AuthenticationScheme);

@@ -20,7 +20,7 @@ namespace TgMiniAppAuth.AuthContext
     /// Gets the user's first name.
     /// </summary>
     [JsonPropertyName("first_name")]
-    public string? FirstName { get; init; }
+    public required string FirstName { get; init; }
 
     /// <summary>
     /// Gets the user's last name.
@@ -44,13 +44,19 @@ namespace TgMiniAppAuth.AuthContext
     /// Gets a value indicating whether the user is a premium user.
     /// </summary>
     [JsonPropertyName("is_premium")]
-    public bool IsPremium { get; init; }
+    public bool? IsPremium { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the user allows writing to private messages.
     /// </summary>
     [JsonPropertyName("allows_write_to_pm")]
-    public bool AllowWriteToPm { get; init; }
+    public bool? AllowWriteToPm { get; init; }
+
+    /// <summary>
+    /// Gets a value with user photo url.
+    /// </summary>
+    [JsonPropertyName("photo_url")]
+    public string? PhotoUrl { get; init; }
 
     /// <summary>
     /// Creates a <see cref="TelegramUser"/> instance from a <see cref="ClaimsPrincipal"/>.
@@ -67,21 +73,28 @@ namespace TgMiniAppAuth.AuthContext
       var languageCodeClaim = principal.FindFirst(TgMiniAppAuthConstants.Claims.LanguageCode);
       var isPremiumClaim = principal.FindFirst(TgMiniAppAuthConstants.Claims.IsPremium);
       var allowWriteToPmClaim = principal.FindFirst(TgMiniAppAuthConstants.Claims.AllowWriteToPm);
+      var photoUrlClaim = principal.FindFirst(TgMiniAppAuthConstants.Claims.PhotoUrl);
 
       if (idClaim == null)
       {
         throw new InvalidOperationException($"Required claim `{TgMiniAppAuthConstants.Claims.Id}` is missing");
       }
 
+      if (firstNameClaim == null)
+      {
+        throw new InvalidOperationException($"Required claim `{TgMiniAppAuthConstants.Claims.FirstName}` is missing");
+      }
+
       return new TelegramUser
       {
         Id = long.Parse(idClaim.Value),
-        FirstName = firstNameClaim?.Value,
+        FirstName = firstNameClaim.Value,
         LastName = lastNameClaim?.Value,
         Username = usernameClaim?.Value,
         LanguageCode = languageCodeClaim?.Value,
         IsPremium = isPremiumClaim != null && bool.Parse(isPremiumClaim.Value),
-        AllowWriteToPm = allowWriteToPmClaim != null && bool.Parse(allowWriteToPmClaim.Value)
+        AllowWriteToPm = allowWriteToPmClaim != null && bool.Parse(allowWriteToPmClaim.Value),
+        PhotoUrl = photoUrlClaim?.Value
       };
     }
 

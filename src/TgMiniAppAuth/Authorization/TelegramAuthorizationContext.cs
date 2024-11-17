@@ -23,6 +23,11 @@ internal sealed class TelegramAuthorizationContext
   /// Date of auth
   /// </summary>
   public DateTimeOffset AuthDate { get; }
+  
+  /// <summary>
+  /// Signature for 3rd party apps
+  /// </summary>
+  public string Signature { get; }
 
   /// <summary>
   /// Check data's string
@@ -46,12 +51,15 @@ internal sealed class TelegramAuthorizationContext
   /// <param name="queryId">Query ID data.</param>
   /// <param name="authDate">Auth date data.</param>
   /// <param name="hash">Hash data.</param>
-  private TelegramAuthorizationContext(AuthDataPair userRaw, AuthDataPair queryId, AuthDataPair authDate, AuthDataPair hash)
+  /// <param name="signatureRaw">Signature data.</param>
+  private TelegramAuthorizationContext(AuthDataPair userRaw, AuthDataPair queryId, AuthDataPair authDate, AuthDataPair hash, AuthDataPair signatureRaw)
   {
     QueryId = queryId.Value;
     Hash = hash.Value;
+    Signature = signatureRaw.Value;
 
-    CheckDataString = authDate.Raw + "\n" + queryId.Raw + "\n" + userRaw.Raw;
+    // TODO: Calculate and sort in runtime
+    CheckDataString = authDate.Raw + "\n" + queryId.Raw + "\n" + signatureRaw.Raw + "\n" + userRaw.Raw;
     CheckDataBytes = Encoding.UTF8.GetBytes(CheckDataString);
     AuthDate = DateTimeOffset.FromUnixTimeSeconds(long.Parse(authDate.Value));
   }
@@ -64,7 +72,7 @@ internal sealed class TelegramAuthorizationContext
   public bool IsValid(string token)
   {
     var tokenBytes = Encoding.UTF8.GetBytes(token);
-
+    
     // Хэш токена с ключом "WebAppData"
     var tokenSigned = HMACSHA256.HashData(WebAppDataBytes, tokenBytes);
     var targetHashBytes = HMACSHA256.HashData(tokenSigned, CheckDataBytes);
@@ -104,6 +112,12 @@ internal sealed class TelegramAuthorizationContext
     {
       throw new ArgumentException("Key auth_date not found");
     }
+    
+    var signature = pairs.FirstOrDefault(x => string.Equals(x.Key, "signature", StringComparison.Ordinal));
+    if (signature == default)
+    {
+      throw new ArgumentException("Key signature not found");
+    }
 
     var hash = pairs.FirstOrDefault(x => string.Equals(x.Key, "hash", StringComparison.Ordinal));
     if (hash == default)
@@ -111,7 +125,7 @@ internal sealed class TelegramAuthorizationContext
       throw new ArgumentException("Key hash not found");
     }
 
-    return new TelegramAuthorizationContext(userPair, queryIdPair, authDate, hash);
+    return new TelegramAuthorizationContext(userPair, queryIdPair, authDate, hash, signature);
   }
 
   /// <summary>
