@@ -1,6 +1,6 @@
+using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Serialization.Metadata;
 using System.Web;
 
 namespace TgMiniAppAuth.Authorization;
@@ -15,13 +15,25 @@ internal static class TelegramAuthorizationContextSpan
   /// </summary>
   private static readonly byte[] WebAppDataBytes = "WebAppData"u8.ToArray();
 
+  /// <summary>
+  /// Check that hash value valid sign of all pairs except 'hash=*' of <see cref="WebAppDataBytes"/> with the token of the telegram bot. 
+  /// </summary>
+  /// <param name="urlEncodedString">Signed data from telegram mini app</param>
+  /// <param name="token">Token of the telegram bot</param>
+  /// <param name="issuedAt">Date of signed data issued</param>
+  /// <returns>Returns true if sign is valid</returns>
+  /// <exception cref="ArgumentException"></exception>
+  /// <exception cref="InvalidOperationException"></exception>
   internal static bool IsValidTelegramMiniAppContext(string urlEncodedString, string token, out DateTimeOffset issuedAt)
   {
+    AuthDataPair hashPair = default;
+    // TODO : Think about UrlDecode to Span<char>
     var decodedString = HttpUtility.UrlDecode(urlEncodedString);
     var blocksCount = decodedString.Count(x => x == '&') + 1;
 
-    AuthDataPair hashPair = default;
-    var array = new AuthDataPair[blocksCount - 1];
+    var rented = ArrayPool<AuthDataPair>.Shared.Rent(blocksCount);
+    var pairs = new Span<AuthDataPair>(rented)[..(blocksCount - 1)];
+
     var startPairIndex = 0;
     var endPairIndex = decodedString.IndexOf('&', 0);
     var length = endPairIndex;
@@ -31,11 +43,9 @@ internal static class TelegramAuthorizationContextSpan
       var rawPair = decodedString.AsMemory(startPairIndex, length);
       var authDataPair = new AuthDataPair(rawPair);
       if (authDataPair.Key is "hash")
-      {
         hashPair = authDataPair;
-      }
       else
-        array[index++] = authDataPair;
+        pairs[index++] = authDataPair;
 
       startPairIndex = endPairIndex + 1;
       if (startPairIndex > decodedString.Length - 1)
@@ -50,14 +60,23 @@ internal static class TelegramAuthorizationContextSpan
       length = endPairIndex - startPairIndex;
     }
 
-    Array.Sort(array);
+    pairs.Sort();
 
     if (hashPair == default)
     {
       throw new ArgumentException("Key 'hash' not found");
     }
 
-    var authDatePair = array.FirstOrDefault(x => x.Key is "auth_date");
+    AuthDataPair authDatePair = default;
+    foreach (var pair in pairs)
+    {
+      if (pair.Key is "auth_date")
+      {
+        authDatePair = pair;
+        break;
+      }
+    }
+    
     if (authDatePair == default)
     {
       throw new ArgumentException("Key 'auth_date' not found");
@@ -70,45 +89,98 @@ internal static class TelegramAuthorizationContextSpan
 
     issuedAt = DateTimeOffset.FromUnixTimeSeconds(unixAuthDate);
 
-    var spanSize = array.Sum(x => x.Raw.Length) + (array.Length - 1);
+    var sum = 0;
+    foreach (var pair in pairs)
+    {
+      sum += pair.Raw.Length;
+    }
+    
+    // Build check string: use alphabetically sorted pairs except 'hash=*' joined with '\n'
+    // Sum of all pairs + pairs.Length - 1 for '\n'
+    var spanSize = sum + pairs.Length - 1;
     Span<char> miniAppCheckDataSpan = stackalloc char[spanSize];
     var spanIndex = 0;
-    for (var i = 0; i < array.Length; i++)
+    for (var i = 0; i < pairs.Length; i++)
     {
-      var item = array[i];
+      var item = pairs[i];
 
       foreach (var ch in item.Raw.Span)
       {
         miniAppCheckDataSpan[spanIndex++] = ch;
       }
 
-      if (i != array.Length - 1)
+      if (i != pairs.Length - 1)
         miniAppCheckDataSpan[spanIndex++] = '\n';
     }
 
-    var hash = hashPair.Value;
+    ArrayPool<AuthDataPair>.Shared.Return(rented, true);
+    
     Span<byte> checkDataBytes = stackalloc byte[1024];
     var checkDataBytesSize = Encoding.UTF8.GetBytes(miniAppCheckDataSpan, checkDataBytes);
     var checkDataBytesActual = checkDataBytes[..checkDataBytesSize];
 
-    Span<byte> tokenSignedBytesSpan = stackalloc byte[32];
-    Span<byte> targetHashBytesSpan = stackalloc byte[32];
-    
-    var tokenBytes = Encoding.UTF8.GetBytes(token); // < 256
-    // Хэш токена с ключом "WebAppData"
-    HMACSHA256.HashData(WebAppDataBytes, tokenBytes, tokenSignedBytesSpan);
-    HMACSHA256.HashData(tokenSignedBytesSpan, checkDataBytesActual, targetHashBytesSpan);
+    Span<byte> tokenSignedBytes = stackalloc byte[32];
+    Span<byte> targetHashBytes = stackalloc byte[32];
+    Span<byte> tokenBytesContainer = stackalloc byte[128];
 
-    var targetHex = Convert.ToHexString(targetHashBytesSpan);
-    
-    for (var i = 0; i < hash.Length; i++)
+    var tokenBytesLength = Encoding.UTF8.GetBytes(token, tokenBytesContainer); // < 128 bytes hypothetically
+    var tokenBytesActual = tokenBytesContainer[..tokenBytesLength];
+
+    // Hash of the token with the key "WebAppData"
+    HMACSHA256.HashData(WebAppDataBytes, tokenBytesActual, tokenSignedBytes);
+    HMACSHA256.HashData(tokenSignedBytes, checkDataBytesActual, targetHashBytes);
+
+    var hash = hashPair.Value;
+    Span<byte> hashHexBytes = stackalloc byte[32];
+    HexStringToByteSpan(hash, hashHexBytes);
+
+    for (var i = 0; i < hashHexBytes.Length; i++)
     {
-      if (Char.ToLower(hash[i]) != Char.ToLower(targetHex[i]))
+      if (hashHexBytes[i] != targetHashBytes[i])
         return false;
     }
 
     return true;
   }
+
+  #region Hex
+
+  /// <summary>
+  /// https://gist.github.com/crozone/06c4aa41e13be89def1352ba0d378b0f
+  /// </summary>
+  /// <param name="inputChars"></param>
+  /// <param name="decodedBytesBuffer"></param>
+  /// <returns></returns>
+  /// <exception cref="InvalidOperationException"></exception>
+  public static Span<byte> HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
+  {
+    if (inputChars.Length % 2 != 0)
+    {
+      throw new InvalidOperationException($"{nameof(inputChars)} length must be even");
+    }
+
+    int bufferLength = inputChars.Length / 2;
+    if (decodedBytesBuffer.Length < bufferLength)
+    {
+      throw new InvalidOperationException(
+        $"{nameof(decodedBytesBuffer)} must be at least half the length of {nameof(inputChars)}");
+    }
+
+    for (int bx = 0, sx = 0; bx < bufferLength; ++bx, ++sx)
+    {
+      // Convert first half of byte
+      char c = inputChars[sx];
+      decodedBytesBuffer[bx] = (byte)((c > '9' ? (c > 'Z' ? (c - 'a' + 10) : (c - 'A' + 10)) : (c - '0')) << 4);
+
+      // Convert second half of byte
+      c = inputChars[++sx];
+      decodedBytesBuffer[bx] |= (byte)(c > '9' ? (c > 'Z' ? (c - 'a' + 10) : (c - 'A' + 10)) : (c - '0'));
+    }
+
+    return decodedBytesBuffer.Slice(0, bufferLength);
+  }
+
+  #endregion
 
   /// <summary>
   /// Represents a key-value pair of auth data.
