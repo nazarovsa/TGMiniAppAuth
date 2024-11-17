@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>TgMiniAppAuth.Benchmarks.TelegramAuthorizationContextBenchmark-20241117-215310</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.14.0, macOS Ventura 13.3.1 (a) (22E772610a) [Darwin 22.4.0]
+Apple M1 2.40GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.303
+  [Host]     : .NET 8.0.7 (8.0.724.31311), X64 RyuJIT SSE4.2
+  DefaultJob : .NET 8.0.7 (8.0.724.31311), X64 RyuJIT SSE4.2
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>IsValid</td><td>7.087 &mu;s</td><td>0.1313 &mu;s</td><td>0.1290 &mu;s</td><td>7.55 KB</td>
+</tr><tr><td>IsValidSpans</td><td>7.052 &mu;s</td><td>0.0895 &mu;s</td><td>0.0837 &mu;s</td><td>6.13 KB</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -51,11 +51,10 @@ namespace TgMiniAppAuth.Authorization
         return Task.CompletedTask;
       }
 
-      var data = TelegramAuthorizationContext.FromUrlEncodedString(dataClaim.Value);
-      if (data.IsValid(_options.Token))
+      if (TelegramAuthorizationContext.IsValidTelegramMiniAppContext(dataClaim.Value, _options.Token, out var issuedAt))
       {
         var utcNow = _systemClock.UtcNow;
-        if (utcNow - data.AuthDate < _options.AuthDataValidInterval)
+        if (utcNow - issuedAt < _options.AuthDataValidInterval)
         {
           context.Succeed(requirement);
         }

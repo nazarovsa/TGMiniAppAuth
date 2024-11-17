@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization.Metadata;
 using System.Web;
 
 namespace TgMiniAppAuth.Authorization;
@@ -7,7 +8,7 @@ namespace TgMiniAppAuth.Authorization;
 /// <summary>
 /// Telgram mini app auth context
 /// </summary>
-internal static class TelegramAuthorizationContext
+internal static class TelegramAuthorizationContextSpan
 {
   /// <summary>
   /// Static value used as a key for bot token sign
@@ -24,14 +25,27 @@ internal static class TelegramAuthorizationContext
       .ToArray();
 
     var tokenBytes = Encoding.UTF8.GetBytes(token);
-    var hash = pairs.FirstOrDefault(x => x.Key.Equals("hash")).Value ??
-               throw new ArgumentException("Auth pair 'hash' not found");
+    var hashPair = pairs.FirstOrDefault(x => x.Key is "hash");
+    if (hashPair == default)
+    {
+      throw new ArgumentException("Key 'hash' not found");
+    }
 
-    issuedAt = DateTimeOffset.FromUnixTimeSeconds(
-      long.Parse(pairs.FirstOrDefault(x => x.Key.Equals("auth_date", StringComparison.Ordinal)).Value ??
-                 throw new ArgumentException("Auth pair 'auth_date' not found")));
+    var authDatePair = pairs.FirstOrDefault(x => x.Key is "auth_date");
+    if (authDatePair == default)
+    {
+      throw new ArgumentException("Key 'auth_date' not found");
+    }
 
-    var miniAppCheckDataString = string.Join("\n", pairs.Where(x => !x.Key.Equals("hash")).Select(x => x.Raw));
+    if (!long.TryParse(authDatePair.Value, out var unixAuthDate))
+    {
+      throw new InvalidOperationException("Failed to parse 'auth_date'");
+    }
+
+    issuedAt = DateTimeOffset.FromUnixTimeSeconds(unixAuthDate);
+    
+    var hash = hashPair.Value;
+    var miniAppCheckDataString = string.Join("\n", pairs.Where(x => x.Key is not "hash").Select(x => x.Raw));
     var miniAppCheckDataBytes = Encoding.UTF8.GetBytes(miniAppCheckDataString);
 
     // Хэш токена с ключом "WebAppData"
@@ -39,7 +53,13 @@ internal static class TelegramAuthorizationContext
     var targetHashBytes = HMACSHA256.HashData(tokenSigned, miniAppCheckDataBytes);
     var targetHashHex = Convert.ToHexString(targetHashBytes);
 
-    return string.Equals(targetHashHex, hash, StringComparison.OrdinalIgnoreCase);
+    for (var i = 0; i < hash.Length; i++)
+    {
+      if (Char.ToLower(hash[i]) == Char.ToLower(targetHashHex[i]))
+        return false;
+    }
+
+    return true;
   }
 
   /// <summary>
@@ -47,15 +67,17 @@ internal static class TelegramAuthorizationContext
   /// </summary>
   private readonly record struct AuthDataPair
   {
+    private readonly int _keyLength;
+    
     /// <summary>
     /// Gets the key of the pair.
     /// </summary>
-    public string Key { get; }
+    public ReadOnlySpan<char> Key => Raw.AsSpan(0, _keyLength);
 
     /// <summary>
     /// Gets the value of the pair.
     /// </summary>
-    public string Value { get; }
+    public ReadOnlySpan<char> Value => Raw.AsSpan(_keyLength + 1);
 
     /// <summary>
     /// Gets the raw pair string.
@@ -69,14 +91,8 @@ internal static class TelegramAuthorizationContext
     /// <exception cref="ArgumentException">Thrown when the pair string is not properly formatted.</exception>
     public AuthDataPair(string pair)
     {
-      var items = pair.Split('=');
-      if (items.Length != 2)
-      {
-        throw new ArgumentException($"{nameof(pair)} should be '=' separated string with two operands");
-      }
-
-      Key = items[0];
-      Value = items[1];
+      var indexOfEquals = pair.IndexOf('=');
+      _keyLength = indexOfEquals;
       Raw = pair;
     }
   }
