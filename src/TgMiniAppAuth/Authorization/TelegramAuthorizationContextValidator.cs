@@ -8,7 +8,7 @@ namespace TgMiniAppAuth.Authorization;
 /// <summary>
 /// Telgram mini app auth context
 /// </summary>
-internal static class TelegramAuthorizationContextSpan
+internal static class TelegramAuthorizationContextValidator
 {
   /// <summary>
   /// Static value used as a key for bot token sign
@@ -27,7 +27,6 @@ internal static class TelegramAuthorizationContextSpan
   internal static bool IsValidTelegramMiniAppContext(string urlEncodedString, string token, out DateTimeOffset issuedAt)
   {
     AuthDataPair hashPair = default;
-    // TODO : Think about UrlDecode to Span<char>
     var decodedString = HttpUtility.UrlDecode(urlEncodedString);
     var blocksCount = decodedString.Count(x => x == '&') + 1;
 
@@ -42,7 +41,7 @@ internal static class TelegramAuthorizationContextSpan
     {
       var rawPair = decodedString.AsMemory(startPairIndex, length);
       var authDataPair = new AuthDataPair(rawPair);
-      if (authDataPair.Key is "hash")
+      if (authDataPair.Raw.Span.StartsWith("hash"))
         hashPair = authDataPair;
       else
         pairs[index++] = authDataPair;
@@ -60,7 +59,7 @@ internal static class TelegramAuthorizationContextSpan
       length = endPairIndex - startPairIndex;
     }
 
-    pairs.Sort();
+    pairs.Sort((x, y) => x.Raw.Span.SequenceCompareTo(y.Raw.Span));
 
     if (hashPair == default)
     {
@@ -70,7 +69,7 @@ internal static class TelegramAuthorizationContextSpan
     AuthDataPair authDatePair = default;
     foreach (var pair in pairs)
     {
-      if (pair.Key is "auth_date")
+      if (pair.Raw.Span.StartsWith("auth_date"))
       {
         authDatePair = pair;
         break;
@@ -82,7 +81,7 @@ internal static class TelegramAuthorizationContextSpan
       throw new ArgumentException("Key 'auth_date' not found");
     }
 
-    if (!long.TryParse(authDatePair.Value, out var unixAuthDate))
+    if (!long.TryParse(GetPairValue(authDatePair.Raw.Span), out var unixAuthDate))
     {
       throw new InvalidOperationException("Failed to parse 'auth_date'");
     }
@@ -130,7 +129,7 @@ internal static class TelegramAuthorizationContextSpan
     HMACSHA256.HashData(WebAppDataBytes, tokenBytesActual, tokenSignedBytes);
     HMACSHA256.HashData(tokenSignedBytes, checkDataBytesActual, targetHashBytes);
 
-    var hash = hashPair.Value;
+    var hash = GetPairValue(hashPair.Raw.Span);
     Span<byte> hashHexBytes = stackalloc byte[32];
     HexStringToByteSpan(hash, hashHexBytes);
 
@@ -180,25 +179,19 @@ internal static class TelegramAuthorizationContextSpan
     return decodedBytesBuffer.Slice(0, bufferLength);
   }
 
+  private static ReadOnlySpan<char> GetPairValue(ReadOnlySpan<char> source)
+  {
+    var indexOfEquals = source.IndexOf("=");
+    return source[(indexOfEquals + 1)..];
+  }
+  
   #endregion
 
   /// <summary>
   /// Represents a key-value pair of auth data.
   /// </summary>
-  private readonly record struct AuthDataPair : IComparable<AuthDataPair>
+  private readonly record struct AuthDataPair
   {
-    private readonly int _keyLength;
-
-    /// <summary>
-    /// Gets the key of the pair.
-    /// </summary>
-    public ReadOnlySpan<char> Key => Raw.Slice(0, _keyLength).Span;
-
-    /// <summary>
-    /// Gets the value of the pair.
-    /// </summary>
-    public ReadOnlySpan<char> Value => Raw.Slice(_keyLength + 1).Span;
-
     /// <summary>
     /// Gets the raw pair string.
     /// </summary>
@@ -211,15 +204,7 @@ internal static class TelegramAuthorizationContextSpan
     /// <exception cref="ArgumentException">Thrown when the pair string is not properly formatted.</exception>
     public AuthDataPair(ReadOnlyMemory<char> pair)
     {
-      ReadOnlySpan<char> span = pair.Span;
-      var indexOfEquals = span.IndexOf('=');
-      _keyLength = indexOfEquals;
       Raw = pair;
-    }
-
-    public int CompareTo(AuthDataPair other)
-    {
-      return Raw.Span.SequenceCompareTo(other.Raw.Span);
     }
   }
 }
