@@ -26,12 +26,12 @@ internal static class TelegramAuthorizationContextValidator
   /// <exception cref="InvalidOperationException"></exception>
   internal static bool IsValidTelegramMiniAppContext(string urlEncodedString, string token, out DateTimeOffset issuedAt)
   {
-    AuthDataPair hashPair = default;
+    ReadOnlyMemory<char> hashPair = default;
     var decodedString = HttpUtility.UrlDecode(urlEncodedString);
     var blocksCount = decodedString.Count(x => x == '&') + 1;
 
-    var rented = ArrayPool<AuthDataPair>.Shared.Rent(blocksCount);
-    var pairs = new Span<AuthDataPair>(rented)[..(blocksCount - 1)];
+    var rented = ArrayPool<ReadOnlyMemory<char>>.Shared.Rent(blocksCount);
+    var pairs = new Span<ReadOnlyMemory<char>>(rented)[..(blocksCount - 1)];
 
     var startPairIndex = 0;
     var endPairIndex = decodedString.IndexOf('&', 0);
@@ -39,12 +39,11 @@ internal static class TelegramAuthorizationContextValidator
     var index = 0;
     while (startPairIndex < decodedString.Length)
     {
-      var rawPair = decodedString.AsMemory(startPairIndex, length);
-      var authDataPair = new AuthDataPair(rawPair);
-      if (authDataPair.Raw.Span.StartsWith("hash"))
-        hashPair = authDataPair;
+      var pair = decodedString.AsMemory(startPairIndex, length);
+      if (pair.Span.StartsWith("hash"))
+        hashPair = pair;
       else
-        pairs[index++] = authDataPair;
+        pairs[index++] = pair;
 
       startPairIndex = endPairIndex + 1;
       if (startPairIndex > decodedString.Length - 1)
@@ -59,29 +58,29 @@ internal static class TelegramAuthorizationContextValidator
       length = endPairIndex - startPairIndex;
     }
 
-    pairs.Sort((x, y) => x.Raw.Span.SequenceCompareTo(y.Raw.Span));
+    pairs.Sort((x, y) => x.Span.SequenceCompareTo(y.Span));
 
-    if (hashPair == default)
+    if (hashPair.IsEmpty)
     {
       throw new ArgumentException("Key 'hash' not found");
     }
 
-    AuthDataPair authDatePair = default;
+    ReadOnlyMemory<char> authDatePair = default;
     foreach (var pair in pairs)
     {
-      if (pair.Raw.Span.StartsWith("auth_date"))
+      if (pair.Span.StartsWith("auth_date"))
       {
         authDatePair = pair;
         break;
       }
     }
-    
-    if (authDatePair == default)
+
+    if (authDatePair.IsEmpty)
     {
       throw new ArgumentException("Key 'auth_date' not found");
     }
 
-    if (!long.TryParse(GetPairValue(authDatePair.Raw.Span), out var unixAuthDate))
+    if (!long.TryParse(GetPairValue(authDatePair.Span), out var unixAuthDate))
     {
       throw new InvalidOperationException("Failed to parse 'auth_date'");
     }
@@ -91,9 +90,9 @@ internal static class TelegramAuthorizationContextValidator
     var sum = 0;
     foreach (var pair in pairs)
     {
-      sum += pair.Raw.Length;
+      sum += pair.Length;
     }
-    
+
     // Build check string: use alphabetically sorted pairs except 'hash=*' joined with '\n'
     // Sum of all pairs + pairs.Length - 1 for '\n'
     var spanSize = sum + pairs.Length - 1;
@@ -103,7 +102,7 @@ internal static class TelegramAuthorizationContextValidator
     {
       var item = pairs[i];
 
-      foreach (var ch in item.Raw.Span)
+      foreach (var ch in item.Span)
       {
         miniAppCheckDataSpan[spanIndex++] = ch;
       }
@@ -112,8 +111,8 @@ internal static class TelegramAuthorizationContextValidator
         miniAppCheckDataSpan[spanIndex++] = '\n';
     }
 
-    ArrayPool<AuthDataPair>.Shared.Return(rented, true);
-    
+    ArrayPool<ReadOnlyMemory<char>>.Shared.Return(rented, true);
+
     Span<byte> checkDataBytes = stackalloc byte[1024];
     var checkDataBytesSize = Encoding.UTF8.GetBytes(miniAppCheckDataSpan, checkDataBytes);
     var checkDataBytesActual = checkDataBytes[..checkDataBytesSize];
@@ -129,21 +128,19 @@ internal static class TelegramAuthorizationContextValidator
     HMACSHA256.HashData(WebAppDataBytes, tokenBytesActual, tokenSignedBytes);
     HMACSHA256.HashData(tokenSignedBytes, checkDataBytesActual, targetHashBytes);
 
-    var hash = GetPairValue(hashPair.Raw.Span);
+    var hash = GetPairValue(hashPair.Span);
     Span<byte> hashHexBytes = stackalloc byte[32];
     HexStringToByteSpan(hash, hashHexBytes);
 
     return hashHexBytes.SequenceEqual(targetHashBytes);
-    
-    for (var i = 0; i < hashHexBytes.Length; i++)
-    {
-      if (hashHexBytes[i] != targetHashBytes[i])
-        return false;
-    }
-
-    return true;
   }
 
+  private static ReadOnlySpan<char> GetPairValue(ReadOnlySpan<char> source)
+  {
+    var indexOfEquals = source.IndexOf("=");
+    return source[(indexOfEquals + 1)..];
+  }
+  
   #region Hex
 
   /// <summary>
@@ -153,7 +150,7 @@ internal static class TelegramAuthorizationContextValidator
   /// <param name="decodedBytesBuffer"></param>
   /// <returns></returns>
   /// <exception cref="InvalidOperationException"></exception>
-  private static Span<byte> HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
+  private static void HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
   {
     if (inputChars.Length % 2 != 0)
     {
@@ -177,36 +174,7 @@ internal static class TelegramAuthorizationContextValidator
       c = inputChars[++sx];
       decodedBytesBuffer[bx] |= (byte)(c > '9' ? (c > 'Z' ? (c - 'a' + 10) : (c - 'A' + 10)) : (c - '0'));
     }
-
-    return decodedBytesBuffer.Slice(0, bufferLength);
   }
 
-  private static ReadOnlySpan<char> GetPairValue(ReadOnlySpan<char> source)
-  {
-    var indexOfEquals = source.IndexOf("=");
-    return source[(indexOfEquals + 1)..];
-  }
-  
   #endregion
-
-  /// <summary>
-  /// Represents a key-value pair of auth data.
-  /// </summary>
-  private readonly record struct AuthDataPair
-  {
-    /// <summary>
-    /// Gets the raw pair string.
-    /// </summary>
-    public ReadOnlyMemory<char> Raw { get; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AuthDataPair"/> struct.
-    /// </summary>
-    /// <param name="pair">The key-value pair string.</param>
-    /// <exception cref="ArgumentException">Thrown when the pair string is not properly formatted.</exception>
-    public AuthDataPair(ReadOnlyMemory<char> pair)
-    {
-      Raw = pair;
-    }
-  }
 }
