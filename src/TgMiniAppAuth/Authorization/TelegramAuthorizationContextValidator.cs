@@ -133,6 +133,8 @@ internal static class TelegramAuthorizationContextValidator
     Span<byte> hashHexBytes = stackalloc byte[32];
     HexStringToByteSpan(hash, hashHexBytes);
 
+    return hashHexBytes.SequenceEqual(targetHashBytes);
+    
     for (var i = 0; i < hashHexBytes.Length; i++)
     {
       if (hashHexBytes[i] != targetHashBytes[i])
@@ -151,7 +153,7 @@ internal static class TelegramAuthorizationContextValidator
   /// <param name="decodedBytesBuffer"></param>
   /// <returns></returns>
   /// <exception cref="InvalidOperationException"></exception>
-  public static Span<byte> HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
+  private static Span<byte> HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
   {
     if (inputChars.Length % 2 != 0)
     {

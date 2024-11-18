@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 namespace TgMiniAppAuth;
 
 /// <summary>
