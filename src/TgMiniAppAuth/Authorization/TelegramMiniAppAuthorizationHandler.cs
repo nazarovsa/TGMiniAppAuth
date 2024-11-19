@@ -11,9 +11,9 @@ namespace TgMiniAppAuth.Authorization
   internal class TelegramMiniAppAuthorizationHandler : AuthorizationHandler<TelegramMiniAppAuthorizationRequirement>
   {
     /// <summary>
-    /// The system clock.
+    /// The time provider.
     /// </summary>
-    private readonly ISystemClock _systemClock;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// The Telegram Mini App authentication options.
@@ -24,12 +24,12 @@ namespace TgMiniAppAuth.Authorization
     /// Initializes a new instance of the <see cref="TelegramMiniAppAuthorizationHandler"/> class.
     /// </summary>
     /// <param name="options">The options for Telegram Mini App authentication.</param>
-    /// <param name="systemClock">The system clock.</param>
+    /// <param name="timeProvider">The system clock.</param>
     /// <exception cref="ArgumentNullException">Thrown when options are null.</exception>
     public TelegramMiniAppAuthorizationHandler(IOptions<TelegramMiniAppAuthorizationOptions> options,
-      ISystemClock systemClock)
+      TimeProvider timeProvider)
     {
-      _systemClock = systemClock;
+      _timeProvider = timeProvider;
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
     }
     
@@ -51,11 +51,10 @@ namespace TgMiniAppAuth.Authorization
         return Task.CompletedTask;
       }
 
-      var data = TelegramAuthorizationContext.FromUrlEncodedString(dataClaim.Value);
-      if (data.IsValid(_options.Token))
+      if (TelegramAuthorizationContextValidator.IsValidTelegramMiniAppContext(dataClaim.Value, _options.Token, out var issuedAt))
       {
-        var utcNow = _systemClock.UtcNow;
-        if (utcNow - data.AuthDate < _options.AuthDataValidInterval)
+        var utcNow = _timeProvider.GetUtcNow();
+        if (utcNow - issuedAt < _options.AuthDataValidInterval)
         {
           context.Succeed(requirement);
         }

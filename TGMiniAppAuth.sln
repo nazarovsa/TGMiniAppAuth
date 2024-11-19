@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgMiniAppAuth", "src\TgMini
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgMIniAppAuth.UnitTests", "tests\TgMIniAppAuth.UnitTests\TgMIniAppAuth.UnitTests.csproj", "{A14AF3F8-CB19-4CD7-89E0-41B98C09A99A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgMiniAppAuth.Benchmarks", "src\TgMiniAppAuth.Benchmarks\TgMiniAppAuth.Benchmarks.csproj", "{BB9D3B20-FF2E-46A4-8C19-CC11E7A59C38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,5 +31,9 @@ Global
 		{A14AF3F8-CB19-4CD7-89E0-41B98C09A99A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A14AF3F8-CB19-4CD7-89E0-41B98C09A99A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A14AF3F8-CB19-4CD7-89E0-41B98C09A99A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB9D3B20-FF2E-46A4-8C19-CC11E7A59C38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB9D3B20-FF2E-46A4-8C19-CC11E7A59C38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB9D3B20-FF2E-46A4-8C19-CC11E7A59C38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB9D3B20-FF2E-46A4-8C19-CC11E7A59C38}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
