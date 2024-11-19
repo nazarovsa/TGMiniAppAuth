@@ -15,7 +15,7 @@ namespace TgMiniAppAuth;
 public static class ServiceCollectionExtensions
 {
   /// <summary>
-  /// Adds Telegram Mini App authentication and authorization services to the specified service collection.
+  /// Adds Telegram Mini App authentication and authorization services to the specified service collection
   /// </summary>
   /// <param name="services">The service collection to add the services to.</param>
   /// <param name="configuration">The configuration to bind the options to.</param>
@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         policy.Requirements.Add(new TelegramMiniAppAuthorizationRequirement());
       }));
 
+    services.TryAddSingleton(TimeProvider.System);
     services.AddUserContextAccessor();
 
     return services;
