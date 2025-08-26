@@ -47,12 +47,12 @@ namespace TgMiniAppAuth.Authentication
         new Claim(TgMiniAppAuthConstants.Claims.RawAuthData, rawData),
         new Claim(TgMiniAppAuthConstants.Claims.Id, telegramUser.Id.ToString()),
         new Claim(TgMiniAppAuthConstants.Claims.FirstName, telegramUser.FirstName),
-        new Claim(TgMiniAppAuthConstants.Claims.LastName, telegramUser.LastName),
-        new Claim(TgMiniAppAuthConstants.Claims.Username, telegramUser.Username),
-        new Claim(TgMiniAppAuthConstants.Claims.LanguageCode, telegramUser.LanguageCode),
-        new Claim(TgMiniAppAuthConstants.Claims.IsPremium, telegramUser.IsPremium.ToString()),
-        new Claim(TgMiniAppAuthConstants.Claims.AllowWriteToPm, telegramUser.AllowWriteToPm.ToString()),
-        new Claim(TgMiniAppAuthConstants.Claims.PhotoUrl, telegramUser.PhotoUrl),
+        new Claim(TgMiniAppAuthConstants.Claims.LastName, telegramUser.LastName ?? string.Empty),
+        new Claim(TgMiniAppAuthConstants.Claims.Username, telegramUser.Username ?? string.Empty),
+        new Claim(TgMiniAppAuthConstants.Claims.LanguageCode, telegramUser.LanguageCode ?? string.Empty),
+        new Claim(TgMiniAppAuthConstants.Claims.IsPremium, telegramUser.IsPremium.ToString() ?? string.Empty),
+        new Claim(TgMiniAppAuthConstants.Claims.AllowWriteToPm, telegramUser.AllowWriteToPm.ToString() ?? string.Empty),
+        new Claim(TgMiniAppAuthConstants.Claims.PhotoUrl, telegramUser.PhotoUrl ?? string.Empty),
       };
 
       var identity = new ClaimsIdentity(claims, TgMiniAppAuthConstants.AuthenticationScheme);
