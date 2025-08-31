@@ -227,3 +227,6 @@ Thumbs.db
 
 # custom
 .DS_Store/
+.aidigestignore
+codebase.md
+update_codebase.sh
