@@ -51,6 +51,11 @@ public static class TgMiniAppAuthConstants
         /// The premium status claim type.
         /// </summary>
         public const string IsPremium = $"{Prefix}:IsPremium";
+        
+        /// <summary>
+        /// The bot status claim type.
+        /// </summary>
+        public const string IsBot = $"{Prefix}:IsBot";
 
         /// <summary>
         /// The allow write to private message claim type.
