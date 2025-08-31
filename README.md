@@ -9,6 +9,8 @@ TgMiniAppAuth is a .NET library that simplifies Telegram Mini App authentication
 
 - Seamless integration with ASP.NET Core
 - Built-in Telegram Mini App authentication handler
+- Zero-allocation validation for authentication data (high-performance)
+- Support for Telegram Bot API 8.0
 - Customizable authorization policies
 - Easy access to authenticated Telegram user data
 - Support for .NET 7.0 and 8.0
@@ -74,6 +76,32 @@ async function fetchUserData() {
     console.log(userData);
 }
 ```
+
+## Performance Optimization
+
+TgMiniAppAuth is optimized for high-performance scenarios with zero heap allocations for authentication data validation:
+
+- Uses stack-based allocation for validation data under 1024 bytes
+- Implements custom URL decoder with zero allocations
+- Optimized memory usage with Span<T> operations
+- Configurable stack allocation threshold for different environments
+
+```csharp
+// Configure the stack allocation threshold in appsettings.json
+"TelegramMiniAppAuthorizationOptions": {
+  "Token": "YOUR_BOT_TOKEN",
+  "AuthDataValidInterval": "01:00:00",
+  "StackAllocationThreshold": 2048 // Default is 1024
+}
+```
+
+## Telegram Bot API 8.0 Support
+
+Full support for Telegram Bot API 8.0, including:
+
+- `is_bot` field for TelegramUser
+- Improved handling of all optional user fields
+- Proper null-safety for all user properties
 
 ## Advanced Usage
 
