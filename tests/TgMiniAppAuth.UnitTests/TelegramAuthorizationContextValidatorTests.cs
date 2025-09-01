@@ -1,3 +1,4 @@
+using TgMiniAppAuth.AuthContext;
 using TgMiniAppAuth.Authorization;
 
 namespace TgMIniAppAuth.UnitTests;

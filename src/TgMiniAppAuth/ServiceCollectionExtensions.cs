@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TgMiniAppAuth.AuthContext;
+using TgMiniAppAuth.AuthContext.User;
 using TgMiniAppAuth.Authentication;
 using TgMiniAppAuth.Authorization;
 

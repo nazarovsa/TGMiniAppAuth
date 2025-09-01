@@ -1,4 +1,5 @@
 using BenchmarkDotNet.Attributes;
+using TgMiniAppAuth.AuthContext;
 using TgMiniAppAuth.Authorization;
 
 namespace TgMiniAppAuth.Benchmarks;

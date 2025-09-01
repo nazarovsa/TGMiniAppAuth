@@ -1,4 +1,4 @@
-namespace TgMiniAppAuth.AuthContext;
+namespace TgMiniAppAuth.AuthContext.User;
 
 /// <summary>
 /// Provides access to the Telegram user.

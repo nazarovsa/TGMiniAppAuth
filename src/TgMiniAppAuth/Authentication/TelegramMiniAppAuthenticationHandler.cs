@@ -4,84 +4,84 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TgMiniAppAuth.AuthContext;
+using TgMiniAppAuth.AuthContext.User;
 
-namespace TgMiniAppAuth.Authentication
+namespace TgMiniAppAuth.Authentication;
+
+/// <summary>
+/// Handles authentication for Telegram Mini App.
+/// </summary>
+public class TelegramMiniAppAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     /// <summary>
-    /// Handles authentication for Telegram Mini App.
+    /// Initializes a new instance of the <see cref="TelegramMiniAppAuthenticationHandler"/> class.
     /// </summary>
-    public class TelegramMiniAppAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+    /// <param name="options">The options monitor.</param>
+    /// <param name="logger">The logger factory.</param>
+    /// <param name="encoder">The URL encoder.</param>
+    /// <param name="clock">The system clock.</param>
+    public TelegramMiniAppAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TelegramMiniAppAuthenticationHandler"/> class.
-        /// </summary>
-        /// <param name="options">The options monitor.</param>
-        /// <param name="logger">The logger factory.</param>
-        /// <param name="encoder">The URL encoder.</param>
-        /// <param name="clock">The system clock.</param>
-        public TelegramMiniAppAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-            ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
+    }
+
+    /// <summary>
+    /// Handles the authentication process.
+    /// </summary>
+    /// <returns>The authentication result.</returns>
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var headers = Request.Headers;
+
+        if (!headers.TryGetValue("Authorization", out var authorizationHeader) ||
+            string.IsNullOrWhiteSpace(authorizationHeader.ToString()))
         {
+            return Task.FromResult(AuthenticateResult.Fail("Authorization header does not presented"));
         }
 
-        /// <summary>
-        /// Handles the authentication process.
-        /// </summary>
-        /// <returns>The authentication result.</returns>
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        var authorizationHeaderValue = authorizationHeader.ToString();
+        var rawData =
+            authorizationHeaderValue.Replace($"{TgMiniAppAuthConstants.AuthenticationScheme} ", string.Empty);
+        var telegramUser = TelegramUser.FromUrlEncodedString(rawData);
+
+        var claims = new List<Claim>()
         {
-            var headers = Request.Headers;
+            new(TgMiniAppAuthConstants.Claims.RawAuthData, rawData),
+            new(TgMiniAppAuthConstants.Claims.Id, telegramUser.Id.ToString()),
+            new(TgMiniAppAuthConstants.Claims.FirstName, telegramUser.FirstName)
+        };
 
-            if (!headers.TryGetValue("Authorization", out var authorizationHeader) ||
-                string.IsNullOrWhiteSpace(authorizationHeader.ToString()))
-            {
-                return Task.FromResult(AuthenticateResult.Fail("Authorization header does not presented"));
-            }
+        FillNonRequiredClaims(claims, telegramUser);
 
-            var authorizationHeaderValue = authorizationHeader.ToString();
-            var rawData =
-                authorizationHeaderValue.Replace($"{TgMiniAppAuthConstants.AuthenticationScheme} ", string.Empty);
-            var telegramUser = TelegramUser.FromUrlEncodedString(rawData);
+        var identity = new ClaimsIdentity(claims, TgMiniAppAuthConstants.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
-            var claims = new List<Claim>()
-            {
-                new(TgMiniAppAuthConstants.Claims.RawAuthData, rawData),
-                new(TgMiniAppAuthConstants.Claims.Id, telegramUser.Id.ToString()),
-                new(TgMiniAppAuthConstants.Claims.FirstName, telegramUser.FirstName)
-            };
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
 
-            FillNonRequiredClaims(claims, telegramUser);
+    private void FillNonRequiredClaims(List<Claim> claims, TelegramUser telegramUser)
+    {
+        if (!string.IsNullOrEmpty(telegramUser.LastName))
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.LastName, telegramUser.LastName));
 
-            var identity = new ClaimsIdentity(claims, TgMiniAppAuthConstants.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-            var ticket = new AuthenticationTicket(principal, Scheme.Name);
+        if (!string.IsNullOrEmpty(telegramUser.Username))
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.Username, telegramUser.Username));
 
-            return Task.FromResult(AuthenticateResult.Success(ticket));
-        }
+        if (!string.IsNullOrEmpty(telegramUser.LanguageCode))
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.LanguageCode, telegramUser.LanguageCode));
 
-        private void FillNonRequiredClaims(List<Claim> claims, TelegramUser telegramUser)
-        {
-            if (!string.IsNullOrEmpty(telegramUser.LastName))
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.LastName, telegramUser.LastName));
+        if (telegramUser.IsPremium.HasValue)
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.IsPremium, telegramUser.IsPremium.Value.ToString()));
 
-            if (!string.IsNullOrEmpty(telegramUser.Username))
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.Username, telegramUser.Username));
+        if (telegramUser.IsBot.HasValue)
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.IsBot, telegramUser.IsBot.Value.ToString()));
 
-            if (!string.IsNullOrEmpty(telegramUser.LanguageCode))
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.LanguageCode, telegramUser.LanguageCode));
+        if (telegramUser.AllowWriteToPm.HasValue)
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.AllowWriteToPm,
+                telegramUser.AllowWriteToPm.Value.ToString()));
 
-            if (telegramUser.IsPremium.HasValue)
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.IsPremium, telegramUser.IsPremium.Value.ToString()));
-
-            if (telegramUser.IsBot.HasValue)
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.IsBot, telegramUser.IsBot.Value.ToString()));
-
-            if (telegramUser.AllowWriteToPm.HasValue)
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.AllowWriteToPm,
-                    telegramUser.AllowWriteToPm.Value.ToString()));
-
-            if (!string.IsNullOrEmpty(telegramUser.PhotoUrl))
-                claims.Add(new Claim(TgMiniAppAuthConstants.Claims.PhotoUrl, telegramUser.PhotoUrl));
-        }
+        if (!string.IsNullOrEmpty(telegramUser.PhotoUrl))
+            claims.Add(new Claim(TgMiniAppAuthConstants.Claims.PhotoUrl, telegramUser.PhotoUrl));
     }
 }
