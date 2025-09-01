@@ -6,7 +6,7 @@ namespace TgMiniAppAuth.Authorization;
 /// <summary>
 /// Telgram mini app auth context
 /// </summary>
-internal static class TelegramAuthorizationContextValidator
+internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationContextValidator
 {
     /// <summary>
     /// Static value used as a key for bot token sign
@@ -14,6 +14,8 @@ internal static class TelegramAuthorizationContextValidator
     private static readonly byte[] WebAppDataBytes = "WebAppData"u8.ToArray();
 
     private const int StackAllocationThreshold = 1024;
+    
+    /// <inheritdoc />
 
     /// <summary>
     /// Check that hash value valid sign of all pairs except 'hash=*' of <see cref="WebAppDataBytes"/> with the token of the telegram bot. 
@@ -25,7 +27,7 @@ internal static class TelegramAuthorizationContextValidator
     /// <returns>Returns true if sign is valid</returns>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
-    internal static bool IsValidTelegramMiniAppContext(string urlEncodedString,
+    public bool IsValidTelegramMiniAppContext(string urlEncodedString,
         string token,
         out DateTimeOffset issuedAt,
         int? stackAllocationThreshold = null)
@@ -148,7 +150,7 @@ internal static class TelegramAuthorizationContextValidator
     /// <param name="output">Sorted input string</param>
     /// <param name="newIndexArray">New index array for sorted output</param>
     /// <param name="stackAllocationThreshold">Threshold of stack allocation.</param>
-    private static void CopyOrderedBuffer(Span<char> input, Span<int> indexArray, Span<char> output,
+    private void CopyOrderedBuffer(Span<char> input, Span<int> indexArray, Span<char> output,
         Span<int> newIndexArray, int? stackAllocationThreshold = null)
     {
         var pairsCount = newIndexArray.Length / 2;
@@ -196,7 +198,7 @@ internal static class TelegramAuthorizationContextValidator
         result.CopyTo(output);
     }
 
-    private static (int start, int length) GetPairPointer(ReadOnlySpan<int> indexArray, int index)
+    private (int start, int length) GetPairPointer(ReadOnlySpan<int> indexArray, int index)
     {
         var startIndex = 2 * index;
         var lengthIndex = 2 * index + 1;
@@ -206,7 +208,7 @@ internal static class TelegramAuthorizationContextValidator
         return (sourceStartIndex, sourceLengthIndex);
     }
 
-    private static void SetPairPointer(Span<int> array, int index, int start, int length)
+    private void SetPairPointer(Span<int> array, int index, int start, int length)
     {
         var startIndex = 2 * index;
         var lengthIndex = 2 * index + 1;
@@ -215,7 +217,7 @@ internal static class TelegramAuthorizationContextValidator
         array[lengthIndex] = length;
     }
 
-    private static int CompareParameterKeys(ReadOnlySpan<char> chars, int leftStart, int leftLength,
+    private int CompareParameterKeys(ReadOnlySpan<char> chars, int leftStart, int leftLength,
         int rightStart, int rightLength)
     {
         var span1 = chars.Slice(leftStart, leftLength);
@@ -224,7 +226,7 @@ internal static class TelegramAuthorizationContextValidator
         return span1.CompareTo(span2, StringComparison.Ordinal);
     }
 
-    private static ReadOnlySpan<char> GetPairValue(ReadOnlySpan<char> source)
+    private ReadOnlySpan<char> GetPairValue(ReadOnlySpan<char> source)
     {
         var indexOfEquals = source.IndexOf("=");
         return source[(indexOfEquals + 1)..];
@@ -239,7 +241,7 @@ internal static class TelegramAuthorizationContextValidator
     /// <param name="decodedBytesBuffer"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    private static void HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
+    private void HexStringToByteSpan(ReadOnlySpan<char> inputChars, Span<byte> decodedBytesBuffer)
     {
         if (inputChars.Length % 2 != 0)
         {
@@ -270,7 +272,7 @@ internal static class TelegramAuthorizationContextValidator
     #region UrlDecode
 
     // Internal code from https://learn.microsoft.com/en-us/dotnet/api/system.web.httputility.urldecode?view=net-9.
-    public static void UrlDecode(ReadOnlySpan<char> input, Encoding encoding, Span<char> decoded, out int length,
+    public void UrlDecode(ReadOnlySpan<char> input, Encoding encoding, Span<char> decoded, out int length,
         int? stackAllocationThreshold = null)
     {
         var allocationThreshold = stackAllocationThreshold ?? StackAllocationThreshold;

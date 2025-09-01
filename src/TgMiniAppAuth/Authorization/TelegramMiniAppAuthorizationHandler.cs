@@ -18,6 +18,11 @@ namespace TgMiniAppAuth.Authorization
     /// The Telegram Mini App authentication options.
     /// </summary>
     private readonly TelegramMiniAppAuthorizationOptions _options;
+    
+    /// <summary>
+    /// The Telegram authorization context validator.
+    /// </summary>
+    private readonly ITelegramAuthorizationContextValidator _validator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TelegramMiniAppAuthorizationHandler"/> class.
@@ -26,10 +31,12 @@ namespace TgMiniAppAuth.Authorization
     /// <param name="timeProvider">The system clock.</param>
     /// <exception cref="ArgumentNullException">Thrown when options are null.</exception>
     public TelegramMiniAppAuthorizationHandler(IOptions<TelegramMiniAppAuthorizationOptions> options,
-      TimeProvider timeProvider)
+      TimeProvider timeProvider,
+      ITelegramAuthorizationContextValidator validator)
     {
       _timeProvider = timeProvider;
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+      _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
     
     /// <summary>
@@ -50,7 +57,7 @@ namespace TgMiniAppAuth.Authorization
         return Task.CompletedTask;
       }
 
-      if (TelegramAuthorizationContextValidator.IsValidTelegramMiniAppContext(dataClaim.Value, _options.Token, out var issuedAt, _options.StackAllocationThreshold))
+      if (_validator.IsValidTelegramMiniAppContext(dataClaim.Value, _options.Token, out var issuedAt, _options.StackAllocationThreshold))
       {
         var utcNow = _timeProvider.GetUtcNow();
         if (utcNow - issuedAt < _options.AuthDataValidInterval)

@@ -9,10 +9,12 @@ public class TelegramAuthorizationContextValidatorTests
 
     private const string Token = "7888212791:AAHOf0quo22Rqfj_TYuHcYnKO051WMOKYB0";
 
+    private readonly TelegramAuthorizationContextValidator _validator = new TelegramAuthorizationContextValidator();
+
     [Fact]
     public void IsValidTelegramMiniAppContext_ValidContextAndDifferentToken_ReturnsFalse()
     {
-        Assert.False(TelegramAuthorizationContextValidator.IsValidTelegramMiniAppContext(Context, "ha-ha", out _));
+        Assert.False(_validator.IsValidTelegramMiniAppContext(Context, "ha-ha", out _));
     }
 
     [Fact]
@@ -20,8 +22,7 @@ public class TelegramAuthorizationContextValidatorTests
     {
         var expectedDateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(1731861317);
 
-        var result =
-            TelegramAuthorizationContextValidator.IsValidTelegramMiniAppContext(Context, Token, out var issuedAt);
+        var result = _validator.IsValidTelegramMiniAppContext(Context, Token, out var issuedAt);
 
         Assert.True(result);
         Assert.Equal(expectedDateTimeOffset, issuedAt);

@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
       .AddScheme<AuthenticationSchemeOptions, TelegramMiniAppAuthenticationHandler>(
         TgMiniAppAuthConstants.AuthenticationScheme, _ => { });
 
+    services.AddSingleton<ITelegramAuthorizationContextValidator, TelegramAuthorizationContextValidator>();
     services.AddSingleton<IAuthorizationHandler, TelegramMiniAppAuthorizationHandler>();
     services.AddAuthorization(opt => opt.AddPolicy(TgMiniAppAuthConstants.AuthenticationScheme,
       policy =>
@@ -42,6 +43,7 @@ public static class ServiceCollectionExtensions
       }));
 
     services.TryAddSingleton(TimeProvider.System);
+    services.TryAddSingleton<ITelegramAuthorizationContextValidator, TelegramAuthorizationContextValidator>();
     services.AddUserContextAccessor();
 
     return services;
