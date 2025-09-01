@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Numerics;
 
 #if SYSTEM_PRIVATE_CORELIB
 using System.Runtime.InteropServices;
