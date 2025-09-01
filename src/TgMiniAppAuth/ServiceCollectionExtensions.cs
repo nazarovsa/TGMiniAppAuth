@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TgMiniAppAuth.AuthContext;
+using TgMiniAppAuth.AuthContext.User;
 using TgMiniAppAuth.Authentication;
 using TgMiniAppAuth.Authorization;
 
@@ -33,6 +34,7 @@ public static class ServiceCollectionExtensions
       .AddScheme<AuthenticationSchemeOptions, TelegramMiniAppAuthenticationHandler>(
         TgMiniAppAuthConstants.AuthenticationScheme, _ => { });
 
+    services.AddSingleton<ITelegramAuthorizationContextValidator, TelegramAuthorizationContextValidator>();
     services.AddSingleton<IAuthorizationHandler, TelegramMiniAppAuthorizationHandler>();
     services.AddAuthorization(opt => opt.AddPolicy(TgMiniAppAuthConstants.AuthenticationScheme,
       policy =>
@@ -42,6 +44,7 @@ public static class ServiceCollectionExtensions
       }));
 
     services.TryAddSingleton(TimeProvider.System);
+    services.TryAddSingleton<ITelegramAuthorizationContextValidator, TelegramAuthorizationContextValidator>();
     services.AddUserContextAccessor();
 
     return services;

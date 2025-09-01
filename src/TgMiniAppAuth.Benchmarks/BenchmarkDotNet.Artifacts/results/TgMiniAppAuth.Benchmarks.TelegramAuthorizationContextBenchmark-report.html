@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>TgMiniAppAuth.Benchmarks.TelegramAuthorizationContextBenchmark-20241118-135456</title>
+<title>TgMiniAppAuth.Benchmarks.TelegramAuthorizationContextBenchmark-20250828-194201</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,7 +13,7 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet v0.14.0, macOS Ventura 13.3.1 (a) (22E772610a) [Darwin 22.4.0]
+BenchmarkDotNet v0.14.0, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
 Apple M1 2.40GHz, 1 CPU, 8 logical and 8 physical cores
 .NET SDK 8.0.303
   [Host]     : .NET 8.0.7 (8.0.724.31311), X64 RyuJIT SSE4.2
@@ -22,10 +22,10 @@ Apple M1 2.40GHz, 1 CPU, 8 logical and 8 physical cores
 <pre><code></code></pre>
 
 <table>
-<thead><tr><th>Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Allocated</th>
+<thead><tr><th>Method    </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>IsValid</td><td>7.045 &mu;s</td><td>0.0940 &mu;s</td><td>0.0879 &mu;s</td><td>7.56 KB</td>
-</tr><tr><td>IsValidSpans</td><td>7.346 &mu;s</td><td>0.1128 &mu;s</td><td>0.1055 &mu;s</td><td>2.79 KB</td>
+</thead><tbody><tr><td>IsValid</td><td>7.005 &mu;s</td><td>0.0927 &mu;s</td><td>0.0867 &mu;s</td><td>2856 B</td>
+</tr><tr><td>IsValidOptimized</td><td>7.659 &mu;s</td><td>0.0866 &mu;s</td><td>0.0810 &mu;s</td><td>-</td>
 </tr></tbody></table>
 </body>
 </html>
