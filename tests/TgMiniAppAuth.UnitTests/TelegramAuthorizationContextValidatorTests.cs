@@ -1,5 +1,4 @@
 using TgMiniAppAuth.AuthContext;
-using TgMiniAppAuth.Authorization;
 
 namespace TgMIniAppAuth.UnitTests;
 
@@ -24,6 +23,22 @@ public class TelegramAuthorizationContextValidatorTests
         var expectedDateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(1731861317);
 
         var result = _validator.IsValidTelegramMiniAppContext(Context, Token, out var issuedAt);
+
+        Assert.True(result);
+        Assert.Equal(expectedDateTimeOffset, issuedAt);
+    }
+
+    private const string Context_RU =
+       "user=%7B%22id%22%3A309304997%2C%22first_name%22%3A%22%D0%98%D0%BB%D1%8C%D1%8F%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22wert24%22%2C%22language_code%22%3A%22en%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FkHgIzZy8vS5OsdizACAAldevpGHxaF5cO8VN4ViYSGQ.svg%22%7D&chat_instance=-7303070830523603883&chat_type=sender&auth_date=1771253021&signature=F0eeDMqXvtt-NC2BwXd3wxDMEIfsm1YrFRhBCqpng6dujX0zPr_oTG2gp_xXV7NepFbeEPhdDw4UWzvuJunNCA&hash=5b0a1c61aa9097cdc57632dbb16d924d58a1e649d1e357b29546a381c1052b49";
+
+    private const string Token_RU = "8295602340:AAGgpnSxn8FO4PbhrW8hk1t2ZpJ_0p5EPIo";
+
+    [Fact]
+    public void IsValidTelegramMiniAppContext_ValidContextAndToken_ReturnsTrueAndExpectedDateTimeOffset_RU()
+    {
+        var expectedDateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(1771253021);
+
+        var result = _validator.IsValidTelegramMiniAppContext(Context_RU, Token_RU, out var issuedAt);
 
         Assert.True(result);
         Assert.Equal(expectedDateTimeOffset, issuedAt);

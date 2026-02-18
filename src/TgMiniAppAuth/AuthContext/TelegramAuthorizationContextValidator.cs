@@ -5,7 +5,7 @@ using System.Text;
 namespace TgMiniAppAuth.AuthContext;
 
 /// <summary>
-/// Telgram mini app auth context
+/// Telegram mini app auth context
 /// </summary>
 internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationContextValidator
 {
@@ -40,8 +40,8 @@ internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationCon
             ? stackalloc char[threshold]
             : new char[urlEncodedString.Length];
         // Decode in stack if in threshold
-        UrlDecode(urlEncodedString, Encoding.UTF8, decodedBuffer, out var decodedLength, threshold);
-        decodedBuffer = decodedBuffer.Slice(0, decodedLength);
+        UrlDecode(urlEncodedString, Encoding.UTF8, decodedBuffer, out var decodedBytesLength, out var decodedCharsLength, threshold);
+        decodedBuffer = decodedBuffer.Slice(0, decodedCharsLength);
         var blocksCount = decodedBuffer.Count('&') + 1;
 
         // Pairs start indexes + length, except hash
@@ -96,8 +96,8 @@ internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationCon
             pairLength = endPairIndex - startPairIndex;
         }
 
-        // All pairs except hash and &, so: decodedLength - hashPair.Length - 1
-        Span<char> orderedCheckData = stackalloc char[decodedLength - hashPair.Length - 1];
+        // All pairs except hash and &, so: decodedCharsLength - hashPair.Length - 1
+        Span<char> orderedCheckData = stackalloc char[decodedCharsLength - hashPair.Length - 1];
         Span<int> newPairBorders = stackalloc int[pairsBorders.Length];
         // Build check string: use alphabetically sorted pairs except 'hash=*' joined with '\n'
         CopyOrderedBuffer(decodedBuffer, pairsBorders, orderedCheckData, newPairBorders, threshold);
@@ -119,9 +119,10 @@ internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationCon
 
         issuedAt = DateTimeOffset.FromUnixTimeSeconds(unixAuthDate);
 
-        Span<byte> checkDataBytes = orderedCheckData.Length <= threshold
-            ? stackalloc byte[orderedCheckData.Length]
-            : new byte[orderedCheckData.Length];
+        var checkDataBytesLength = decodedBytesLength - hashPair.Length - 1;
+        Span<byte> checkDataBytes = checkDataBytesLength <= threshold
+            ? stackalloc byte[checkDataBytesLength]
+            : new byte[checkDataBytesLength];
         Encoding.UTF8.GetBytes(orderedCheckData, checkDataBytes);
 
         Span<byte> tokenSignedBytes = stackalloc byte[32];
@@ -272,13 +273,14 @@ internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationCon
     #region UrlDecode
 
     // Internal code from https://learn.microsoft.com/en-us/dotnet/api/system.web.httputility.urldecode?view=net-9.
-    public void UrlDecode(ReadOnlySpan<char> input, Encoding encoding, Span<char> decoded, out int length,
+    public void UrlDecode(ReadOnlySpan<char> input, Encoding encoding, Span<char> decoded, out int lengthBytes, out int lengthChars,
         int? stackAllocationThreshold = null)
     {
         var allocationThreshold = stackAllocationThreshold ?? StackAllocationThreshold;
         if (input.IsEmpty)
         {
-            length = 0;
+            lengthBytes = 0;
+            lengthChars = 0;
             return;
         }
 
@@ -347,8 +349,9 @@ internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationCon
             }
         }
 
-        length = helper.BytesLength;
+        lengthBytes = helper.BytesLength;
         helper.WriteString(decoded);
+        lengthChars = helper.CharsLength;
     }
 
 
@@ -392,6 +395,7 @@ internal class TelegramAuthorizationContextValidator : ITelegramAuthorizationCon
         private readonly Span<byte> _byteBuffer;
 
         public int BytesLength => _numBytes;
+        public int CharsLength => _numChars;
 
         // Encoding to convert chars to bytes
         private readonly Encoding _encoding;
