@@ -8,7 +8,7 @@ namespace TgMiniAppAuth.AuthContext.User;
 /// <summary>
 /// Represents a Telegram user.
 /// </summary>
-public sealed class TelegramUser
+public sealed partial class TelegramUser
 {
     /// <summary>
     /// Gets the user's ID.
@@ -124,7 +124,13 @@ public sealed class TelegramUser
         if (string.IsNullOrWhiteSpace(serializedUser))
             throw new InvalidOperationException("Failed to extract user data from url encoded string");
 
-        return JsonSerializer.Deserialize<TelegramUser>(serializedUser) ??
+        return JsonSerializer.Deserialize(
+                   serializedUser,
+                   TelegramUserJsonContext.Default.TelegramUser) ??
                throw new ArgumentException($"Failed to extract {nameof(TelegramUser)} from serialized user data");
     }
+
+    [JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Default)]
+    [JsonSerializable(typeof(TelegramUser))]
+    private sealed partial class TelegramUserJsonContext : JsonSerializerContext;
 }
